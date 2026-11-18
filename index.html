@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta name="stock-api-base" content="https://tax-foster-compliant-avenue.trycloudflare.com">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#132e59"><meta name="description" content="화주와 상품을 선택하면 셀별 재고를 한눈에 확인할 수 있습니다.">
+  <title>재고 리모컨</title><link rel="icon" href="./icon.svg"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="topbar"><div class="brand"><img src="./icon.svg" alt="" width="36" height="36"><span>재고 리모컨<small>STOCK REMOTE</small></span></div><div class="top-actions"><span id="connection" class="connection">전산 연결 전</span><button id="logout" class="text-button" hidden>로그아웃</button></div></header>
+  <main>
+    <section id="startup-view" class="startup-view" role="status" aria-live="polite"><div class="spinner" aria-hidden="true"></div><p>화면을 불러오는 중…</p></section>
+    <section id="login-view" class="login-view" hidden>
+      <div class="login-copy"><div class="eyebrow">YOUR WAREHOUSE, IN YOUR HAND</div><h1>찾는 재고를,<br>손안에서 바로.</h1><p>복잡한 전산 화면 대신<br>상품 이름으로 찾고, 셀별 수량만 확인하세요.</p><div class="feature-line"><span>한글 상품 검색</span><span>여러 상품 선택</span><span>셀별 합산</span></div></div>
+      <form id="login-form" class="login-card" method="post" action="/api/login"><span class="section-kicker">시작하기</span><h2>전산 계정으로 연결</h2><p class="muted">회사 전산에서 사용 중인 계정을 입력해 주세요.</p><label for="username">아이디</label><input id="username" name="username" autocomplete="username" value="" required maxlength="100"><label for="password">비밀번호</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="200"><div id="login-error" role="alert" class="error" hidden></div><button id="login-button" class="primary" type="submit">전산 연결하기 <span aria-hidden="true">↗</span></button><p id="login-progress" class="login-foot">비밀번호는 서버 파일에 저장하지 않습니다.</p></form>
+    </section>
+    <section id="workspace" hidden>
+      <div class="page-heading"><div><h1>재고조회</h1><p>상품을 찾고, 보관된 셀과 수량을 확인하세요.</p></div><span class="warehouse"><span aria-hidden="true">▦</span> <span id="warehouse"></span></span></div>
+      <div class="workspace-grid">
+        <div class="search-column">
+          <section class="card owner-card"><div class="section-heading"><h2>화주 선택</h2><span class="muted small">화주명 또는 코드</span></div><div class="owner-fields"><div class="search-wrap"><span aria-hidden="true">⌕</span><input id="owner-search" type="search" placeholder="화주명 검색" aria-label="화주명 검색" autocomplete="off"></div><select id="owner-select" aria-label="화주 선택"><option value="">화주를 선택해 주세요</option></select></div><div class="owner-load-row"><span>화주를 선택한 후 조회를 눌러 주세요.</span><button id="owner-load" class="primary" disabled>조회</button></div></section>
+          <section class="card products-card"><div class="section-heading"><h2>상품 찾기</h2><span class="stock-badge"><i></i> 재고 있는 상품만</span></div><form id="product-search-form" class="product-search-form" role="search"><div class="search-wrap product-search"><span aria-hidden="true">⌕</span><input id="product-search" type="search" placeholder="상품명 입력 · 예: 헤쿨라" aria-label="상품명 또는 물품코드 검색" autocomplete="off" enterkeyhint="search" disabled></div><button id="product-search-button" class="primary" type="submit" disabled>검색</button></form>
+            <div class="catalog-meta"><span id="catalog-summary">화주를 먼저 선택해 주세요</span><button id="refresh" class="text-button" disabled>↻ 새로고침</button></div>
+            <div id="load-error" class="error" role="alert" hidden></div><div id="loading" class="empty-state" role="status" hidden><div class="spinner"></div><h3>전산에서 재고를 확인하고 있어요</h3><p id="loading-status">전체 목록과 합계를 확인합니다.</p></div>
+            <div id="selection-tools" class="selection-tools" hidden><label><input id="select-all" type="checkbox"> 검색 결과 전체 선택</label><span id="visible-count"></span></div>
+            <div id="product-list"></div><div id="empty" class="empty-state"><div class="empty-icon" aria-hidden="true">⌕</div><h3 id="empty-title">어느 화주의 재고를 찾으세요?</h3><p id="empty-message">화주를 선택한 후 조회 버튼을 눌러 주세요.</p></div>
+            <div class="selection-footer"><div><strong id="selected-count">0개 선택</strong><button id="clear-selection" class="text-button" disabled>선택 해제</button></div><span class="muted small">체크하면 셀별 재고가 바로 표시됩니다.</span></div>
+          </section>
+        </div>
+        <aside id="results-panel" class="card results-panel" aria-label="선택 상품 재고"><div class="section-heading"><h2>셀별 재고</h2><span class="result-unit">환산수량 기준</span></div><div id="results-placeholder" class="empty-state"><div class="cell-illustration" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div><h3>필요한 재고만, 한눈에</h3><p>상품을 체크하면 재고가 바로 표시됩니다.<br>같은 셀의 수량은 하나로 합쳐집니다.</p></div><div id="results" aria-live="polite"></div><p id="result-note" class="result-note" hidden>같은 상품 · 같은 보관셀의 재고를 합산했습니다. 박스수는 환산총수량 ÷ 본입수로 계산한 수량이며 실제 미개봉 박스 수와 다를 수 있습니다.</p></aside>
+      </div><footer class="page-footer"><span>NTWMS · 재고 리모컨</span><span id="checked-at">조회 시각이 여기에 표시됩니다.</span></footer>
+    </section>
+  </main>
+  <dialog id="picking-dialog" aria-labelledby="picking-title">
+    <form id="picking-form">
+      <h2 id="picking-title">피킹셀을 어디로 바꿀까요?</h2>
+      <p id="picking-product"></p>
+      <label for="picking-cell">변경할 피킹셀 번호</label>
+      <input id="picking-cell" inputmode="numeric" autocomplete="off" pattern="[0-9]{7,12}" maxlength="12" placeholder="예: 5000101" required>
+      <p id="picking-preview" class="picking-preview" hidden></p>
+      <p id="picking-status" role="status"></p>
+      <p id="picking-error" class="error" role="alert" hidden></p>
+      <div class="picking-actions"><button id="picking-close" type="button" class="text-button">닫기</button><button id="picking-submit" type="submit" class="primary">저장</button></div>
+    </form>
+  </dialog>
+  <dialog id="move-dialog" aria-labelledby="move-title">
+    <form id="move-form">
+      <h2 id="move-title">보관셀 이동</h2>
+      <p id="move-product"></p><div id="move-source" aria-label="출발 보관셀 조회 재고"></div>
+      <label for="move-target">이동할 보관셀</label>
+      <input id="move-target" inputmode="numeric" pattern="[0-9]{7,12}" maxlength="12" autocomplete="off" placeholder="예: 1333105" required>
+      <div class="move-count-fields"><label for="move-boxes">이동 박스수<input id="move-boxes" type="number" inputmode="numeric" min="0" step="1" value="0" autocomplete="off" required></label><label for="move-each">이동 낱개수<input id="move-each" type="number" inputmode="decimal" min="0" step="0.000001" value="0" autocomplete="off" required></label></div>
+      <p id="move-total" class="move-total" aria-live="polite"></p>
+      <p id="move-policy" class="muted small">유통기한이 빠른 재고부터 이동합니다. 기한이 같거나 없으면 입고일이 오래된 순서로 배분하며, 기한 없는 재고는 마지막에 이동합니다.</p>
+      <div id="move-preview" hidden></div>
+      <p id="move-status" role="status"></p><p id="move-error" class="error" role="alert" hidden></p>
+      <button id="move-recheck" type="button" class="text-button">이전 이동 결과 재확인</button>
+      <div class="picking-actions"><button id="move-close" type="button" class="text-button">닫기</button><button id="move-submit" type="submit" class="primary">이동</button></div>
+    </form>
+  </dialog>
+  <script src="./app.js" type="module"></script>
+<script type="module" src="./health.js"></script>
+</body></html>
