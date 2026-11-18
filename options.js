@@ -28,10 +28,10 @@ export async function mountOptions(container, owners, valid = () => true, recove
   const { settings, printers, transport } = recovery?.loaded || await api('/api/printing/settings'); if (!valid()) return;
   const values = recovery?.draft || settings;
   container.replaceChildren();
-  if (transport === 'client') { const {mountPrintClient} = await import('./print-client.js'); if(!valid())return; mountPrintClient(container,api); }
   const recoveryBar = node('div'); recoveryBar.className = 'option-recovery';
   const reload = node('button', '최신 설정 다시 불러오기'); reload.type = 'button'; reload.className = 'text-button';
   const recoveryStatus = node('p', recovery?.message || '다른 기기에서 바꾼 설정을 불러올 때 작성 중인 변경값을 함께 대조합니다.'); recoveryStatus.setAttribute('role', 'status'); recoveryBar.append(reload, recoveryStatus); container.append(recoveryBar);
+  if (transport === 'client') { const {mountPrintClient} = await import('./print-client.js'); if(!valid())return; mountPrintClient(container,api,()=>reload.click()); }
   const methods = {}, modes = {}, printerFields = {};
   const saveArea = () => { const wrapper = node('div'), button = node('button', '옵션 저장'), status = node('p'); button.type = 'button'; button.className = 'primary'; status.setAttribute('role', 'status'); wrapper.append(button, status); return { wrapper, button, status }; };
   const dispatchSave = saveArea(), remarkSave = saveArea();
