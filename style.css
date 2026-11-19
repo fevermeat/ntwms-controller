@@ -508,3 +508,5 @@ input:focus, select:focus, button:focus-visible { outline-color: #427bef; }
 .print-client-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .print-client-actions > a { display: inline-flex; text-decoration: none; align-items: center; }
 
+
+.print-client-setup>label{display:block;margin:12px 0}.print-client-setup>label select{display:block;width:100%;margin-top:6px}.print-client-state{white-space:pre-line;line-height:1.7;padding:12px;border-radius:8px;background:var(--bg)}.print-client-state[data-state=connected]{background:#e9f5ee;color:#1c6242}.print-client-install{margin-top:12px}.print-client-install input{display:block;width:100%;margin:12px 0}.print-client-actions .primary{display:inline-block;text-decoration:none;text-align:center;min-width:180px}
