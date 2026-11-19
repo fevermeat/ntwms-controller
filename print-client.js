@@ -3,6 +3,7 @@ const mobile = () => /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || 
 export function mountPrintClient(container, api, onConnected = () => {}) {
   if (mobile()) return;
   let id;try{id=localStorage.getItem('stock-print-client');}catch{}
+  const remember=result=>{if(result.id){id=result.id;try{localStorage.setItem('stock-print-client',id);}catch{}}};
   const box = document.createElement('details'); box.className='print-client-setup';
   const heading = document.createElement('summary'); heading.textContent = '이 PC 인쇄 연결';
   const name = document.createElement('input'); name.placeholder = '예: 사무실 김완석 PC'; name.maxLength = 80; name.setAttribute('aria-label','PC 이름');
@@ -35,6 +36,7 @@ export function mountPrintClient(container, api, onConnected = () => {}) {
       try{
         while(box.isConnected&&Date.now()<deadline){
           const result=await api('/api/print-client/status');if(!box.isConnected)return;
+          remember(result);
           if(result.connected&&result.id===id){status.textContent=`${result.name} · 연결됨`;onConnected();return;}
           await new Promise(resolve=>setTimeout(resolve,1000));
         }
@@ -46,6 +48,6 @@ export function mountPrintClient(container, api, onConnected = () => {}) {
   const help=document.createElement('p');help.className='muted small';help.textContent='처음 한 번 install.cmd로 설치하면 연결하기에서 프로그램 실행과 프린터 목록 갱신까지 진행합니다.';
   const actions=document.createElement('div');actions.className='print-client-actions';actions.append(connect,register,download);
   box.append(heading,name,actions,status,help);container.prepend(box);
-  const selected = id ? api('/api/print-client/select',{method:'POST',body:JSON.stringify({id})}) : Promise.resolve();
-  void selected.then(()=>api('/api/print-client/status')).then(result=>{status.textContent=result.connected?`${result.name} · 연결됨`:'이 PC의 연결 프로그램을 실행하고 프린터를 선택해 주세요.';}).catch(error=>{status.textContent=error.message;});
+  const selected = id ? api('/api/print-client/select',{method:'POST',body:JSON.stringify({id})}).catch(error=>{if(![404,409].includes(error.status))throw error;}) : Promise.resolve();
+  void selected.then(()=>api('/api/print-client/status')).then(result=>{remember(result);status.textContent=result.connected?`${result.name} · 연결됨`:'이 PC의 연결 프로그램을 실행하고 프린터를 선택해 주세요.';}).catch(error=>{status.textContent=error.message;});
 }
