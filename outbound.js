@@ -505,7 +505,21 @@ function paintWorkflow(job) {
 async function watchWorkflow(job, rev) {
   const { followWorkflow } = await import('./workflow.js');
   following = true; setBusy(job.state === 'running');
-  try { paintWorkflow(job); if (job.state === 'running') await followWorkflow(job.id, paintWorkflow, () => rev === generation); }
+  try {
+    paintWorkflow(job);
+    const finished = job.state === 'running' ? await followWorkflow(job.id, paintWorkflow, () => rev === generation) : job;
+    const failed = new Set((finished?.results||[]).filter(r=>r.state==='failed'&&r.type==='매출출고').map(r=>r.key));
+    if (rev === generation && failed.size) {
+      // Older workflow responses omit allocation details. Read current ERP state before offering intake.
+      setBusy(true);
+      try {
+        const query=await post('query',readFilters()),fresh=await poll(query.id,rev,false);
+        if(rev!==generation)return;
+        for(const current of fresh.data.orders){const order=orders.find(o=>o.key===current.key);if(!order||!failed.has(order.key))continue;order.status=current.status;order.result={...order.result,allocation:current.result?.allocation,result:current.result};}
+        paintResults();for(const key of failed)paintOrderDetail(key);
+      } catch(e) { if(rev===generation)message($('out-message').textContent+' · 할당 상세 재조회 실패: '+e.message,true); }
+    }
+  }
   finally { following = false; if (rev === generation) { setBusy(false); await refreshDocumentStatuses(); } }
 }
 function selectedOrdersInDisplayOrder() {
