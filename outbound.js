@@ -87,7 +87,7 @@ function setBusy(value) {
   if ($('tab-inbound')) $('tab-inbound').disabled = value;
   $('logout').disabled = locked;
   for (const input of $('out-list').querySelectorAll('input,select,button')) input.disabled = value;
-  for (const input of $('out-list').querySelectorAll('.out-reset,.out-finalize,.out-delete,.out-intake,.out-pallet-register,.out-pallet-mapping')) input.disabled=locked;
+  for (const input of $('out-list').querySelectorAll('.out-reset,.out-finalize,.out-delete,.out-intake,.out-purpose,.out-pallet-register,.out-pallet-mapping')) input.disabled=locked;
   for(const article of $('out-list').querySelectorAll('.out-order'))if(orders.find(o=>o.key===article.dataset.key)?.processingIssue)for(const input of article.querySelectorAll('input,button,select'))input.disabled=true;
   for (const input of $('out-methods').querySelectorAll('input,select,button')) input.disabled = locked;
   for (const key of detailNodes.keys()) if (!orderDetails.get(key)?.data) paintOrderDetail(key);
@@ -148,7 +148,10 @@ function paintOrderDetail(key) {
       if(order?.type==='매출출고'&&(shortages.length||!allocation?.lines&&['partial','unallocated'].includes(order.result?.state))){
         const button=el('button','입고처리(타계정반품)','out-intake');button.type='button';button.disabled=busy||autoActive();button.setAttribute('aria-label',item.name+' 입고처리(타계정반품)');
         button.onclick=async()=>{if(busy||autoActive())return;const rev=generation;setBusy(true);try{const {openIntakeForProduct}=await import('./intake.js');await openIntakeForProduct(order.owner,item,{ownerName:order.ownerName,shortage:shortage||undefined,done:data=>{if(rev===generation)message(`${item.name} · 입고완료 ${data.quantity}개 · ${data.cell} · 접수·할당·출력을 다시 실행해 주세요.`);}});}catch(e){if(rev===generation)message(e.message,true);}finally{if(rev===generation)setBusy(false);}};
-        heading.append(button);
+        const itemActions=el('div',null,'out-item-actions');itemActions.append(button);
+        const purpose=el('button','용도변경','out-purpose');purpose.type='button';purpose.disabled=busy||autoActive();purpose.setAttribute('aria-label',item.name+' 용도변경');
+        purpose.onclick=async()=>{if(busy||autoActive())return;const rev=generation;setBusy(true);try{const {openPurposeChange}=await import('./purpose-change.js');await openPurposeChange(order.owner,item,{ownerName:order.ownerName,shortage:shortage||undefined,done:data=>{if(rev===generation)message(`${item.name} · 용도변경 완료 · 출고 ${data.source.quantity}개 / 반품 입고 ${data.target.quantity}개 · 접수·할당·출력을 다시 실행해 주세요.`);}});}catch(e){if(rev===generation)message(e.message,true);}finally{if(rev===generation)setBusy(false);}};
+        itemActions.append(purpose);heading.append(itemActions);
       }
       content.append(row);
     }
